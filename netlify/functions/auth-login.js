@@ -138,7 +138,7 @@ exports.handler = async function(event, context) {
     // Créer le cookie avec configuration pour fonctionner sur Netlify
     // Note: on évite d'utiliser SameSite=None car cela pourrait nécessiter https
     const domain = event.headers.host ? `.${event.headers.host.split(':')[0]}` : '';
-    const cookieHeader = `token=${token}; Path=/; Max-Age=${60 * 60 * 24}; HttpOnly; ${process.env.NODE_ENV === 'production' ? 'Secure;' : ''}`;
+    const cookieHeader = `token=${token}; Path=/; Max-Age=${60 * 60 * 24}; ${process.env.NODE_ENV === 'production' ? 'Secure;' : ''}`;
     
     console.log("API Auth/Login: Cookie configuré:", cookieHeader.replace(token, "TOKEN_HIDDEN"));
     
@@ -155,7 +155,8 @@ exports.handler = async function(event, context) {
           id: user._id,
           username: user.username,
           role: user.role
-        }
+        },
+        token: token
       })
     };
   } catch (error) {

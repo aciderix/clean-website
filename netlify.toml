@@ -20,6 +20,24 @@
   # Autoriser l'accès externe aux modules node
   external_node_modules = ["mongoose", "bcryptjs", "jsonwebtoken"]
 
+# Configuration des headers CORS
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization, Cookie"
+    Access-Control-Allow-Credentials = "true"
+
+# Headers spécifiques pour les APIs
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization, Cookie"
+    Access-Control-Allow-Credentials = "true"
+
 # Redirection spécifique pour la page setup
 [[redirects]]
   from = "/admin/setup"

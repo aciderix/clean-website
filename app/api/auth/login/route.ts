@@ -44,7 +44,15 @@ export async function POST(req: NextRequest) {
         },
         token: token,
       },
-      { status: 200 },
+      { 
+        status: 200,
+        headers: {
+          "Access-Control-Allow-Origin": "https://clean-eau.netlify.app",
+          "Access-Control-Allow-Credentials": "true",
+          "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization, Cookie",
+        }
+      },
     )
 
     console.log("API Login: Définition du cookie token");
@@ -53,12 +61,12 @@ export async function POST(req: NextRequest) {
       value: token,
       httpOnly: false,
       secure: false,
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24, // 1 day
+      sameSite: "none",
       path: "/",
+      maxAge: 60 * 60 * 24, // 1 day
     })
-
-    console.log("API Login: Cookies définis dans la réponse");
+    
+    console.log("API Login: Cookie configuré:", `token=${token.substring(0, 5)}...TOKEN_HIDDEN...; Path=/; Max-Age=86400; ${response.cookies.get("token")?.httpOnly ? "HttpOnly;" : ""}`);
     return response
   } catch (error) {
     console.error("Login error:", error)

@@ -26,7 +26,7 @@ export default function AdminLogin() {
   const setCookie = (name: string, value: string, days: number) => {
     const expires = new Date();
     expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
-    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax`;
+    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=None`;
     console.log("Cookie défini manuellement:", `${name}=${value.substring(0, 10)}...`);
   }
 
@@ -66,43 +66,28 @@ export default function AdminLogin() {
       }
 
       console.log("Connexion réussie:", data.message);
-      console.log("Headers de réponse:", Object.fromEntries(response.headers.entries()));
+      console.log("Headers de réponse:", response.headers);
       console.log("Cookies après connexion:", document.cookie || "aucun cookie");
       
-      // Si le serveur a envoyé un token dans la réponse JSON, on le sauvegarde en cookie
+      // Si le serveur a envoyé un token dans la réponse JSON, on le sauvegarde en cookie et localStorage
       if (data.token) {
         console.log("Token reçu dans la réponse:", data.token.substring(0, 10) + "...");
+        
+        // Sauvegarde dans localStorage et sessionStorage
+        console.log("Sauvegarde dans localStorage");
+        localStorage.setItem("authToken", data.token);
+        sessionStorage.setItem("authToken", data.token);
+        
+        // Définir cookie manuellement
         console.log("Définition d'un cookie côté client");
         setCookie("token", data.token, 1); // Expire dans 1 jour
         
         // Vérifier si le cookie a bien été défini
         const tokenCookie = getCookie("token");
-        console.log("Cookie token après définition:", tokenCookie ? "présent" : "absent");
+        console.log("Cookie token après définition manuelle:", tokenCookie ? "présent" : "absent");
         
-        // Sauvegarde dans localStorage comme solution de secours
-        console.log("Sauvegarde dans localStorage comme backup");
-        localStorage.setItem("authToken", data.token);
-        
-        // Tester l'authentification avec le token en Header
-        try {
-          console.log("Test d'authentification avec token dans le header");
-          const authCheck = await fetch("/api/auth/me", {
-            headers: {
-              "Authorization": `Bearer ${data.token}`,
-              "Cache-Control": "no-cache"
-            },
-            cache: "no-store"
-          });
-          
-          if (authCheck.ok) {
-            const userData = await authCheck.json();
-            console.log("Authentification par header réussie pour:", userData.user.username);
-          } else {
-            console.log("Échec de l'authentification par header");
-          }
-        } catch (authError) {
-          console.error("Erreur lors du test d'authentification par header:", authError);
-        }
+        // Pause pour permettre au cookie de s'établir
+        await new Promise(resolve => setTimeout(resolve, 500));
       } else {
         console.error("Aucun token reçu dans la réponse");
       }
@@ -118,8 +103,8 @@ export default function AdminLogin() {
       console.log("Cookies avant redirection:", document.cookie || "aucun cookie");
       console.log("localStorage avant redirection:", localStorage.getItem("authToken") ? "token présent" : "pas de token");
       
-      // Utiliser router.push au lieu de window.location.href
-      router.push("/admin");
+      // Utiliser une redirection dure pour s'assurer que le middleware récupère le bon état
+      window.location.href = "/admin";
     } catch (error) {
       console.error("Erreur lors de la connexion:", error);
       

@@ -28,12 +28,15 @@ export default function AdminLogin() {
     setIsLoading(true)
 
     try {
+      console.log("Tentative de connexion avec:", formData.username);
+      
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
+        credentials: "include"  // Important pour que les cookies soient envoyés/stockés
       })
 
       if (!response.ok) {
@@ -41,8 +44,21 @@ export default function AdminLogin() {
         throw new Error(error.message || "Erreur de connexion")
       }
 
-      router.push("/admin")
+      const data = await response.json()
+      console.log("Connexion réussie:", data.message);
+      
+      toast({
+        title: "Succès",
+        description: "Vous êtes connecté avec succès",
+      })
+
+      // Redirection vers le tableau de bord
+      setTimeout(() => {
+        router.push("/admin")
+      }, 500);
     } catch (error) {
+      console.error("Erreur lors de la connexion:", error);
+      
       toast({
         title: "Erreur de connexion",
         description: error instanceof Error ? error.message : "Identifiants invalides",

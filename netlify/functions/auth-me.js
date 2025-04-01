@@ -52,12 +52,16 @@ async function connectDB() {
 }
 
 exports.handler = async function(event, context) {
-  // Headers CORS
+  // Déterminer le domaine pour utiliser le bon CORS
+  const origin = event.headers.origin || 'https://clean-eau.netlify.app';
+  
+  // Headers CORS - Ajuster pour le domaine spécifique plutôt que '*'
   const headers = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': origin,
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cookie',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
-    'Access-Control-Allow-Credentials': 'true'
+    'Access-Control-Allow-Credentials': 'true',
+    'Cache-Control': 'no-cache'
   };
 
   // Gestion des OPTIONS
@@ -80,9 +84,12 @@ exports.handler = async function(event, context) {
 
   try {
     console.log("API Auth/Me: Récupération du token");
+    console.log("Headers reçus:", JSON.stringify(event.headers));
     
     // Récupérer le token dans les cookies
     const cookies = event.headers.cookie || '';
+    console.log("Cookies reçus:", cookies);
+    
     let token = null;
     
     // Chercher le token dans les cookies
@@ -98,7 +105,10 @@ exports.handler = async function(event, context) {
       return {
         statusCode: 401,
         headers,
-        body: JSON.stringify({ message: "Unauthorized" })
+        body: JSON.stringify({ 
+          message: "Unauthorized",
+          authenticated: false 
+        })
       };
     }
 
@@ -110,9 +120,14 @@ exports.handler = async function(event, context) {
       return {
         statusCode: 401,
         headers,
-        body: JSON.stringify({ message: "Unauthorized" })
+        body: JSON.stringify({ 
+          message: "Unauthorized",
+          authenticated: false
+        })
       };
     }
+
+    console.log("API Auth/Me: Token valide pour:", decoded.username);
 
     // Connexion à la base de données
     await connectDB();
@@ -125,7 +140,10 @@ exports.handler = async function(event, context) {
       return {
         statusCode: 401,
         headers,
-        body: JSON.stringify({ message: "Unauthorized" })
+        body: JSON.stringify({ 
+          message: "Unauthorized",
+          authenticated: false
+        })
       };
     }
 
@@ -134,6 +152,7 @@ exports.handler = async function(event, context) {
       statusCode: 200,
       headers,
       body: JSON.stringify({
+        authenticated: true,
         user: {
           id: user._id,
           username: user.username,
@@ -148,7 +167,8 @@ exports.handler = async function(event, context) {
       headers,
       body: JSON.stringify({
         message: "Internal server error",
-        error: error.message
+        error: error.message,
+        authenticated: false
       })
     };
   }

@@ -61,12 +61,16 @@ async function connectDB() {
 }
 
 exports.handler = async function(event, context) {
-  // Headers CORS
+  // Déterminer le domaine pour utiliser le bon CORS
+  const origin = event.headers.origin || 'https://clean-eau.netlify.app';
+  
+  // Headers CORS - Ajuster pour le domaine spécifique plutôt que '*'
   const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cookie',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Credentials': 'true'
+    'Access-Control-Allow-Credentials': 'true',
+    'Cache-Control': 'no-cache'
   };
 
   // Gestion des OPTIONS
@@ -131,8 +135,12 @@ exports.handler = async function(event, context) {
     // Générer le token JWT
     const token = generateToken(user);
     
-    // Créer le cookie
-    const cookieHeader = `token=${token}; HttpOnly; Path=/; Max-Age=${60 * 60 * 24}; SameSite=Strict; ${process.env.NODE_ENV === 'production' ? 'Secure;' : ''}`;
+    // Créer le cookie avec configuration pour fonctionner sur Netlify
+    // Note: on évite d'utiliser SameSite=None car cela pourrait nécessiter https
+    const domain = event.headers.host ? `.${event.headers.host.split(':')[0]}` : '';
+    const cookieHeader = `token=${token}; Path=/; Max-Age=${60 * 60 * 24}; HttpOnly; ${process.env.NODE_ENV === 'production' ? 'Secure;' : ''}`;
+    
+    console.log("API Auth/Login: Cookie configuré:", cookieHeader.replace(token, "TOKEN_HIDDEN"));
     
     // Ajouter le Set-Cookie header
     headers['Set-Cookie'] = cookieHeader;

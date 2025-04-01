@@ -20,8 +20,16 @@
   status = 200
   force = true
 
-# Redirection pour les API
+# Redirection spécifique pour l'API setup
+[[redirects]]
+  from = "/api/setup"
+  to = "/.netlify/functions/setup"
+  status = 200
+  force = true
+
+# Gestion correcte des autres API routes Next.js
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/api/:splat"
+  to = "/.netlify/functions/next_api_*"
   status = 200
+  force = true

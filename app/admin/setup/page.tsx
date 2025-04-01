@@ -39,6 +39,8 @@ export default function SetupPage() {
     setIsLoading(true)
 
     try {
+      console.log("Envoi de la requête à /api/setup...");
+      
       const response = await fetch("/api/setup", {
         method: "POST",
         headers: {
@@ -50,6 +52,8 @@ export default function SetupPage() {
         }),
       })
 
+      console.log("Réponse reçue:", response.status);
+      
       if (!response.ok) {
         const error = await response.json()
         throw new Error(error.message || "Erreur lors de la configuration")
@@ -62,6 +66,8 @@ export default function SetupPage() {
 
       router.push("/admin/login")
     } catch (error) {
+      console.error("Erreur détaillée:", error);
+      
       toast({
         title: "Erreur",
         description: error instanceof Error ? error.message : "Une erreur est survenue",

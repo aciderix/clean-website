@@ -7,3 +7,23 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# Augmenter le timeout des fonctions
+[functions]
+  node_bundler = "esbuild"
+  included_files = ["lib/**"]
+  # Timeout des fonctions à 30 secondes (maximum autorisé)
+  timeout = 30
+
+# Redirection spécifique pour la page setup
+[[redirects]]
+  from = "/admin/setup"
+  to = "/admin/setup"
+  status = 200
+  force = true
+
+# Redirection pour les API
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200

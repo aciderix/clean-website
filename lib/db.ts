@@ -20,14 +20,30 @@ async function connectDB() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
+      connectTimeoutMS: 30000,
+      socketTimeoutMS: 30000,
     }
 
-    cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
-      return mongoose
-    })
+    console.log("Connecting to MongoDB...")
+    
+    cached.promise = mongoose.connect(MONGODB_URI!, opts)
+      .then((mongoose) => {
+        console.log("MongoDB connected successfully")
+        return mongoose
+      })
+      .catch((error) => {
+        console.error("MongoDB connection error:", error)
+        throw error
+      })
   }
-  cached.conn = await cached.promise
-  return cached.conn
+  
+  try {
+    cached.conn = await cached.promise
+    return cached.conn
+  } catch (error) {
+    console.error("Failed to establish MongoDB connection:", error)
+    throw error
+  }
 }
 
 export default connectDB

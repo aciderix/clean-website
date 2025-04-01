@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -23,12 +23,21 @@ export default function AdminLogin() {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
+  const setCookie = (name: string, value: string, days: number) => {
+    const expires = new Date();
+    expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax`;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
       console.log("Tentative de connexion avec:", formData.username);
+      
+      // Vérifier les cookies avant la connexion
+      console.log("Cookies avant connexion:", document.cookie);
       
       const response = await fetch("/api/auth/login", {
         method: "POST",
@@ -46,33 +55,28 @@ export default function AdminLogin() {
       }
 
       console.log("Connexion réussie:", data.message);
+      console.log("Headers de réponse:", response.headers);
+      console.log("Cookies après connexion:", document.cookie);
+      
+      // Si le serveur a envoyé un token mais qu'il n'est pas visible dans document.cookie
+      // (problème avec httpOnly), on va créer un cookie de secours côté client
+      if (data.token) {
+        console.log("Définition d'un cookie de secours côté client");
+        setCookie("token", data.token, 1); // Expire dans 1 jour
+      }
       
       toast({
         title: "Succès",
         description: "Vous êtes connecté avec succès",
       })
 
-      // Vérifier que l'authentification fonctionne avant la redirection
-      try {
-        const authCheck = await fetch("/api/auth/me", {
-          credentials: "include"
-        });
-        
-        if (authCheck.ok) {
-          console.log("Authentification confirmée, redirection...");
-          // Forcer une redirection complète au lieu d'une navigation client
-          window.location.href = "/admin";
-        } else {
-          console.error("Problème de vérification d'authentification");
-          setTimeout(() => {
-            window.location.href = "/admin";
-          }, 1000);
-        }
-      } catch (authError) {
-        console.error("Erreur lors de la vérification d'authentification:", authError);
-        // Rediriger quand même
-        window.location.href = "/admin";
-      }
+      // Courte pause pour s'assurer que les cookies sont bien enregistrés
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      console.log("Cookies avant redirection:", document.cookie);
+      
+      // Forcer une redirection complète pour recharger toutes les données
+      window.location.href = "/admin";
     } catch (error) {
       console.error("Erreur lors de la connexion:", error);
       
@@ -90,14 +94,20 @@ export default function AdminLogin() {
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Administration C.L.E.A.N.</CardTitle>
-          <CardDescription>Connectez-vous pour accéder au panneau d'administration</CardDescription>
+          <CardTitle className="text-2xl font-bold">Connexion administrateur</CardTitle>
+          <CardDescription>Entrez vos identifiants pour accéder à l'administration</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="username">Nom d'utilisateur</Label>
-              <Input id="username" name="username" value={formData.username} onChange={handleChange} required />
+              <Input
+                id="username"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                required
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Mot de passe</Label>
@@ -111,7 +121,7 @@ export default function AdminLogin() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Connexion..." : "Se connecter"}
+              {isLoading ? "Connexion en cours..." : "Se connecter"}
             </Button>
           </form>
         </CardContent>

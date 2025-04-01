@@ -31,24 +31,32 @@ export default function AdminLayout({
     // Check if user is authenticated
     const checkAuth = async () => {
       try {
-        console.log("Vérification de l'authentification...");
+        console.log("Layout: Vérification de l'authentification...");
+        console.log("Layout: Cookies actuels:", document.cookie);
         
         const response = await fetch("/api/auth/me", {
-          credentials: "include"  // Important pour que les cookies soient envoyés
+          credentials: "include",  // Important pour que les cookies soient envoyés
+          cache: "no-store",       // Éviter la mise en cache
+          headers: {
+            "Cache-Control": "no-cache" // Éviter le cache
+          }
         })
 
+        console.log("Layout: Statut de la réponse:", response.status);
+        
         if (!response.ok) {
-          console.log("Non authentifié, redirection vers login");
-          router.push("/admin/login")
+          console.log("Layout: Non authentifié, redirection vers login");
+          // Forcer un rechargement complet pour décharger le cache
+          window.location.href = "/admin/login";
           return
         }
 
         const data = await response.json()
-        console.log("Authentifié comme:", data.user.username);
+        console.log("Layout: Authentifié comme:", data.user.username);
         setUser(data.user)
       } catch (error) {
-        console.error("Erreur lors de la vérification d'authentification:", error);
-        router.push("/admin/login")
+        console.error("Layout: Erreur lors de la vérification d'authentification:", error);
+        window.location.href = "/admin/login";
       } finally {
         setIsLoading(false)
       }
@@ -66,32 +74,21 @@ export default function AdminLayout({
     return <>{children}</>
   }
 
-  // Afficher un indicateur de chargement pendant la vérification d'authentification
+  // Afficher un loader pendant la vérification de l'authentification
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <p className="text-lg">Chargement...</p>
+      <div className="flex h-screen w-screen items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>
       </div>
     )
   }
 
-  // Pour les autres pages admin, afficher uniquement après authentification
-  if (!user.username && !isPublicPage) {
-    // Cette condition ne devrait pas se produire grâce au redirect dans useEffect
-    // mais on le garde comme sécurité supplémentaire
-    router.push("/admin/login")
-    return null
-  }
-
   return (
-    <div className="flex h-screen bg-gray-100">
-      <div className={`${isSidebarOpen ? "block" : "hidden"} md:block`}>
-        <AdminSidebar />
-      </div>
-
-      <div className="flex-1">
+    <div className="flex h-screen flex-col md:flex-row">
+      <AdminSidebar isOpen={isSidebarOpen} />
+      <div className="flex flex-1 flex-col overflow-hidden">
         <AdminHeader toggleSidebar={toggleSidebar} user={user} />
-        <main className="pt-16 pb-8 px-6 ml-64">{children}</main>
+        <main className="flex-1 overflow-y-auto bg-gray-50 p-4 md:p-6">{children}</main>
       </div>
     </div>
   )

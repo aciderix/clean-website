@@ -5,8 +5,8 @@ import { verifyToken } from "./lib/auth"
 export function middleware(request: NextRequest) {
   // Check if the request is for the admin area
   if (request.nextUrl.pathname.startsWith("/admin")) {
-    // Skip middleware for login page
-    if (request.nextUrl.pathname === "/admin/login") {
+    // Skip middleware for login page and setup page
+    if (request.nextUrl.pathname === "/admin/login" || request.nextUrl.pathname === "/admin/setup") {
       return NextResponse.next()
     }
 

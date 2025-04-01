@@ -18,7 +18,7 @@
   # Dossier où se trouvent les fonctions
   directory = "netlify/functions/"
   # Autoriser l'accès externe aux modules node
-  external_node_modules = ["mongoose", "bcryptjs"]
+  external_node_modules = ["mongoose", "bcryptjs", "jsonwebtoken"]
 
 # Redirection spécifique pour la page setup
 [[redirects]]
@@ -31,6 +31,27 @@
 [[redirects]]
   from = "/api/setup"
   to = "/.netlify/functions/setup"
+  status = 200
+  force = true
+
+# Redirection pour l'API auth/me
+[[redirects]]
+  from = "/api/auth/me"
+  to = "/.netlify/functions/auth-me"
+  status = 200
+  force = true
+
+# Redirection pour l'API auth/login
+[[redirects]]
+  from = "/api/auth/login"
+  to = "/.netlify/functions/auth-login"
+  status = 200
+  force = true
+
+# Redirection pour l'API auth/logout
+[[redirects]]
+  from = "/api/auth/logout"
+  to = "/.netlify/functions/auth-logout"
   status = 200
   force = true
 

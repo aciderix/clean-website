@@ -36,15 +36,15 @@ export default function AdminLogin() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
-        credentials: "include"  // Important pour que les cookies soient envoyés/stockés
+        credentials: "include"
       })
 
+      const data = await response.json()
+
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || "Erreur de connexion")
+        throw new Error(data.message || "Erreur de connexion")
       }
 
-      const data = await response.json()
       console.log("Connexion réussie:", data.message);
       
       toast({
@@ -52,10 +52,27 @@ export default function AdminLogin() {
         description: "Vous êtes connecté avec succès",
       })
 
-      // Redirection vers le tableau de bord
-      setTimeout(() => {
-        router.push("/admin")
-      }, 500);
+      // Vérifier que l'authentification fonctionne avant la redirection
+      try {
+        const authCheck = await fetch("/api/auth/me", {
+          credentials: "include"
+        });
+        
+        if (authCheck.ok) {
+          console.log("Authentification confirmée, redirection...");
+          // Forcer une redirection complète au lieu d'une navigation client
+          window.location.href = "/admin";
+        } else {
+          console.error("Problème de vérification d'authentification");
+          setTimeout(() => {
+            window.location.href = "/admin";
+          }, 1000);
+        }
+      } catch (authError) {
+        console.error("Erreur lors de la vérification d'authentification:", authError);
+        // Rediriger quand même
+        window.location.href = "/admin";
+      }
     } catch (error) {
       console.error("Erreur lors de la connexion:", error);
       

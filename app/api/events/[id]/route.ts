@@ -64,9 +64,6 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     return NextResponse.json({ message: "Event deleted successfully" }, { status: 200 })
   } catch (error) {
     console.error("Delete event error:", error)
-    return NextResponse.json(
-      { message: 'Internal server error' },\
-      { status:  error)
     return NextResponse.json({ message: "Internal server error" }, { status: 500 })
   }
 }

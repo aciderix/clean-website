@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "mongoose": "^8.0.0",
+    "mongoose": "^6.12.0",
     "bcryptjs": "^2.4.3"
   }
 } 

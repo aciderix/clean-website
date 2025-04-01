@@ -1,9 +1,12 @@
 [build]
   command = "npm run build"
   publish = ".next"
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF ./netlify/functions/"
 
 [build.environment]
   NETLIFY_NEXT_PLUGIN_SKIP = "true"
+  # Forcer l'installation des dépendances des fonctions
+  NODE_ENV = "production"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
@@ -12,6 +15,10 @@
 [functions]
   node_bundler = "esbuild"
   included_files = ["lib/**"]
+  # Dossier où se trouvent les fonctions
+  directory = "netlify/functions/"
+  # Autoriser l'accès externe aux modules node
+  external_node_modules = ["mongoose", "bcryptjs"]
 
 # Redirection spécifique pour la page setup
 [[redirects]]

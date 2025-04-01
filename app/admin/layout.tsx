@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import AdminSidebar from "@/components/admin/sidebar"
 import AdminHeader from "@/components/admin/header"
 
@@ -15,8 +15,17 @@ export default function AdminLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [user, setUser] = useState({ username: "", role: "" })
   const router = useRouter()
+  const pathname = usePathname()
+  
+  // Vérifier si on est sur la page setup
+  const isSetupPage = pathname === "/admin/setup"
 
   useEffect(() => {
+    // Skip authentication check for setup page
+    if (isSetupPage) {
+      return
+    }
+    
     // Check if user is authenticated
     const checkAuth = async () => {
       try {
@@ -34,13 +43,19 @@ export default function AdminLayout({
     }
 
     checkAuth()
-  }, [router])
+  }, [router, isSetupPage, pathname])
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen)
   }
 
-  if (!user.username) {
+  // Afficher directement le contenu pour la page setup sans les éléments d'admin
+  if (isSetupPage) {
+    return <>{children}</>
+  }
+
+  // Pour les autres pages admin, afficher uniquement après authentification
+  if (!user.username && !isSetupPage) {
     return null // Loading state
   }
 

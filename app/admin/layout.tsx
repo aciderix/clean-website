@@ -21,6 +21,13 @@ export default function AdminLayout({
   // Vérifier si on est sur la page setup ou login
   const isPublicPage = pathname === "/admin/setup" || pathname === "/admin/login"
 
+  // Fonction pour définir un cookie
+  const setCookie = (name: string, value: string, days: number) => {
+    const expires = new Date();
+    expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax`;
+  }
+
   useEffect(() => {
     // Skip authentication check for public pages (setup, login)
     if (isPublicPage) {
@@ -32,14 +39,30 @@ export default function AdminLayout({
     const checkAuth = async () => {
       try {
         console.log("Layout: Vérification de l'authentification...");
-        console.log("Layout: Cookies actuels:", document.cookie);
+        console.log("Layout: Cookies actuels:", document.cookie || "aucun cookie");
+        
+        // Vérifier si un token est stocké dans localStorage (solution de secours)
+        const storedToken = localStorage.getItem("authToken");
+        if (storedToken && !document.cookie.includes("token=")) {
+          console.log("Layout: Token trouvé dans localStorage, définition du cookie");
+          setCookie("token", storedToken, 1);
+        }
+        
+        // Préparer les headers pour l'API
+        const headers: HeadersInit = {
+          "Cache-Control": "no-cache"
+        };
+        
+        // Si token dans localStorage, l'utiliser aussi dans les headers
+        if (storedToken) {
+          headers["Authorization"] = `Bearer ${storedToken}`;
+          console.log("Layout: Ajout du token dans les headers");
+        }
         
         const response = await fetch("/api/auth/me", {
           credentials: "include",  // Important pour que les cookies soient envoyés
           cache: "no-store",       // Éviter la mise en cache
-          headers: {
-            "Cache-Control": "no-cache" // Éviter le cache
-          }
+          headers
         })
 
         console.log("Layout: Statut de la réponse:", response.status);

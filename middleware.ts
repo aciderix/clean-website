@@ -14,27 +14,28 @@ export function middleware(request: NextRequest) {
       return NextResponse.next()
     }
 
-    // Check for auth token
+    // Check for auth token dans cookie
     const token = request.cookies.get("token")?.value
     
     console.log("Middleware: Vérification du token pour", request.nextUrl.pathname);
     console.log("Middleware: Cookie token présent:", !!token);
 
-    if (!token) {
-      console.log("Middleware: Pas de token, redirection vers login");
-      return NextResponse.redirect(new URL("/admin/login", request.url))
-    }
+    // Si token présent, on vérifie sa validité
+    if (token) {
+      const decoded = verifyToken(token)
+      console.log("Middleware: Token décodé:", !!decoded);
 
-    // Verify token
-    const decoded = verifyToken(token)
-    console.log("Middleware: Token décodé:", !!decoded);
-
-    if (!decoded) {
-      console.log("Middleware: Token invalide, redirection vers login");
-      return NextResponse.redirect(new URL("/admin/login", request.url))
+      if (decoded) {
+        console.log("Middleware: Authentification réussie pour", request.nextUrl.pathname);
+        return NextResponse.next()
+      }
+      
+      console.log("Middleware: Token invalide");
     }
     
-    console.log("Middleware: Authentification réussie pour", request.nextUrl.pathname);
+    // Si aucun token valide trouvé, redirection vers login
+    console.log("Middleware: Redirection vers login");
+    return NextResponse.redirect(new URL("/admin/login", request.url))
   }
 
   return NextResponse.next()

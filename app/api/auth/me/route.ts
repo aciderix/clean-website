@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getAuthUser } from "@/lib/auth"
+import { getAuthUser, verifyToken } from "@/lib/auth"
 import { cookies } from "next/headers"
 
 export async function GET(req: NextRequest) {
@@ -14,7 +14,38 @@ export async function GET(req: NextRequest) {
     const tokenCookie = cookieStore.get("token");
     console.log("API Me: Cookie token présent:", !!tokenCookie);
     
-    const user = getAuthUser()
+    // Autorisation dans le header (pour le token localStorage)
+    const authHeader = req.headers.get("Authorization");
+    let headerToken = null;
+    
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      headerToken = authHeader.substring(7);
+      console.log("API Me: Token trouvé dans les headers");
+    }
+    
+    // Vérifier le token depuis le cookie
+    const user = getAuthUser();
+    
+    // Si pas de user depuis le cookie mais token dans header, vérifier ce token
+    if (!user && headerToken) {
+      console.log("API Me: Tentative de vérification du token header");
+      const decoded = verifyToken(headerToken);
+      
+      if (decoded) {
+        console.log("API Me: Token header valide pour:", decoded.username);
+        return NextResponse.json(
+          {
+            user: {
+              id: decoded.id,
+              username: decoded.username,
+              role: decoded.role,
+            },
+          },
+          { status: 200 },
+        );
+      }
+    }
+    
     console.log("API Me: Utilisateur authentifié:", !!user);
 
     if (!user) {

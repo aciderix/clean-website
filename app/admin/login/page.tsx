@@ -27,6 +27,17 @@ export default function AdminLogin() {
     const expires = new Date();
     expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
     document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax`;
+    console.log("Cookie défini manuellement:", `${name}=${value.substring(0, 10)}...`);
+  }
+
+  const getCookie = (name: string) => {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) {
+      const cookieValue = parts.pop()?.split(';').shift();
+      return cookieValue;
+    }
+    return null;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,7 +48,7 @@ export default function AdminLogin() {
       console.log("Tentative de connexion avec:", formData.username);
       
       // Vérifier les cookies avant la connexion
-      console.log("Cookies avant connexion:", document.cookie);
+      console.log("Cookies avant connexion:", document.cookie || "aucun cookie");
       
       const response = await fetch("/api/auth/login", {
         method: "POST",
@@ -55,14 +66,45 @@ export default function AdminLogin() {
       }
 
       console.log("Connexion réussie:", data.message);
-      console.log("Headers de réponse:", response.headers);
-      console.log("Cookies après connexion:", document.cookie);
+      console.log("Headers de réponse:", Object.fromEntries(response.headers.entries()));
+      console.log("Cookies après connexion:", document.cookie || "aucun cookie");
       
-      // Si le serveur a envoyé un token mais qu'il n'est pas visible dans document.cookie
-      // (problème avec httpOnly), on va créer un cookie de secours côté client
+      // Si le serveur a envoyé un token dans la réponse JSON, on le sauvegarde en cookie
       if (data.token) {
-        console.log("Définition d'un cookie de secours côté client");
+        console.log("Token reçu dans la réponse:", data.token.substring(0, 10) + "...");
+        console.log("Définition d'un cookie côté client");
         setCookie("token", data.token, 1); // Expire dans 1 jour
+        
+        // Vérifier si le cookie a bien été défini
+        const tokenCookie = getCookie("token");
+        console.log("Cookie token après définition:", tokenCookie ? "présent" : "absent");
+        
+        // Sauvegarde dans localStorage comme solution de secours
+        console.log("Sauvegarde dans localStorage comme backup");
+        localStorage.setItem("authToken", data.token);
+        
+        // Tester l'authentification avec le token en Header
+        try {
+          console.log("Test d'authentification avec token dans le header");
+          const authCheck = await fetch("/api/auth/me", {
+            headers: {
+              "Authorization": `Bearer ${data.token}`,
+              "Cache-Control": "no-cache"
+            },
+            cache: "no-store"
+          });
+          
+          if (authCheck.ok) {
+            const userData = await authCheck.json();
+            console.log("Authentification par header réussie pour:", userData.user.username);
+          } else {
+            console.log("Échec de l'authentification par header");
+          }
+        } catch (authError) {
+          console.error("Erreur lors du test d'authentification par header:", authError);
+        }
+      } else {
+        console.error("Aucun token reçu dans la réponse");
       }
       
       toast({
@@ -71,12 +113,13 @@ export default function AdminLogin() {
       })
 
       // Courte pause pour s'assurer que les cookies sont bien enregistrés
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      console.log("Cookies avant redirection:", document.cookie);
+      console.log("Cookies avant redirection:", document.cookie || "aucun cookie");
+      console.log("localStorage avant redirection:", localStorage.getItem("authToken") ? "token présent" : "pas de token");
       
-      // Forcer une redirection complète pour recharger toutes les données
-      window.location.href = "/admin";
+      // Utiliser router.push au lieu de window.location.href
+      router.push("/admin");
     } catch (error) {
       console.error("Erreur lors de la connexion:", error);
       

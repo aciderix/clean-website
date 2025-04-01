@@ -22,8 +22,14 @@ export function generateToken(user: any) {
 
 export function verifyToken(token: string) {
   try {
-    return jwt.verify(token, JWT_SECRET!)
-  } catch (error) {
+    console.log("Auth: Vérification du token avec JWT_SECRET:", process.env.JWT_SECRET ? `défini (${process.env.JWT_SECRET.substring(0, 5)}...)` : "non défini");
+    console.log("Auth: Token à vérifier (début):", token.substring(0, 15) + "...");
+    // @ts-ignore - Pour debugging
+    const decoded = jwt.verify(token, JWT_SECRET!);
+    console.log("Auth: Token décodé avec succès:", !!decoded);
+    return decoded;
+  } catch (error: any) {
+    console.error("Auth: Erreur lors de la vérification du token:", error.message);
     return null
   }
 }

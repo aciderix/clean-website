@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { verifyToken } from "./lib/auth"
+import jwt from "jsonwebtoken"
 
 export function middleware(request: NextRequest) {
+  const JWT_SECRET = process.env.JWT_SECRET
+  console.log("Middleware: JWT_SECRET défini:", !!JWT_SECRET, JWT_SECRET ? `(${JWT_SECRET.substring(0, 5)}...)` : "");
+  
   // Check if the request is for the admin area
   if (request.nextUrl.pathname.startsWith("/admin")) {
     // Skip middleware for login page and setup page
@@ -20,8 +24,19 @@ export function middleware(request: NextRequest) {
     const tokenFromHeader = authHeader?.startsWith("Bearer ") ? authHeader.substring(7) : null;
     
     console.log("Middleware: Vérification du token pour", request.nextUrl.pathname);
-    console.log("Middleware: Cookie token présent:", !!token);
+    console.log("Middleware: Cookie token présent:", !!token, token ? `(début: ${token.substring(0, 15)}...)` : "");
     console.log("Middleware: Header token présent:", !!tokenFromHeader);
+
+    // Vérification manuelle du token (debug)
+    if (token && JWT_SECRET) {
+      try {
+        // Utiliser directement jwt.verify pour déboguer
+        const manualCheck = jwt.verify(token, JWT_SECRET);
+        console.log("Middleware: Vérification manuelle du token:", !!manualCheck);
+      } catch (error: any) {
+        console.error("Middleware: Erreur vérification manuelle:", error.message);
+      }
+    }
 
     // Vérifier le token depuis le cookie
     if (token) {
